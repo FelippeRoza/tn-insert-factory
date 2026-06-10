@@ -142,10 +142,17 @@ async function create4UpPdf(
     for (const pageNums of [front, back]) {
       const a4Page = a4Doc.addPage([a4WPt, a4HPt]);
 
-      // Dashed cut line across horizontal center
+      // Solid horizontal line = cut here
       a4Page.drawLine({
         start: { x: 0, y: a4HPt / 2 },
         end: { x: a4WPt, y: a4HPt / 2 },
+        thickness: 0.25,
+        color: rgb(0.55, 0.55, 0.55),
+      });
+      // Dashed vertical line = fold each half here
+      a4Page.drawLine({
+        start: { x: a4WPt / 2, y: 0 },
+        end: { x: a4WPt / 2, y: a4HPt },
         thickness: 0.25,
         color: rgb(0.55, 0.55, 0.55),
         dashArray: [3, 3],

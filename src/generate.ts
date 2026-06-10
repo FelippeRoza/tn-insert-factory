@@ -92,7 +92,7 @@ async function main() {
       console.log("  Printing instructions:");
       console.log("  1. Print double-sided, flip on long edge");
       if (strategy === "portrait4up") {
-        console.log("  2. Cut each sheet horizontally at the center (dashed line)");
+        console.log("  2. Cut each sheet horizontally at the center (solid line)");
         console.log("  3. Fold each half along its vertical center");
         console.log("  4. Nest and saddle-stitch the folded pieces");
         console.log(`  5. Trim edges to the crop marks (${size.widthMm} x ${size.heightMm} mm)`);
