@@ -15,6 +15,11 @@ const previewLabel = document.getElementById("preview-label") as HTMLSpanElement
 const previewInfoBox = document.getElementById("info-preview") as HTMLDivElement;
 const previewInfoToggle = document.getElementById("preview-info-toggle") as HTMLButtonElement;
 const downloadBtn = document.getElementById("download-preview") as HTMLButtonElement;
+const layoutSelect = document.getElementById("layout") as HTMLSelectElement;
+const calendarFields = document.getElementById("calendar-fields") as HTMLDivElement;
+const spacingRow = document.getElementById("spacing-row") as HTMLDivElement;
+const calYearInput = document.getElementById("cal-year") as HTMLInputElement;
+const calMonthSelect = document.getElementById("cal-month") as HTMLSelectElement;
 
 let currentPreviewUrl: string | null = null;
 
@@ -37,6 +42,21 @@ colorCustomPicker.addEventListener("input", () => {
   swatches.forEach((s) => s.classList.remove("selected"));
   colorHiddenInput.value = colorCustomPicker.value;
 });
+
+// Initialise calendar year to current year.
+calYearInput.value = String(new Date().getFullYear());
+// Initialise calendar month to current month.
+calMonthSelect.value = String(new Date().getMonth());
+
+function applyLayoutUI(layoutKey: string) {
+  const isCalendar = layoutKey === "calendar";
+  calendarFields.style.display = isCalendar ? "block" : "none";
+  spacingRow.style.display = isCalendar ? "none" : "grid";
+}
+
+// Sync on load and on change.
+applyLayoutUI(layoutSelect.value);
+layoutSelect.addEventListener("change", () => applyLayoutUI(layoutSelect.value));
 
 function hexToRgb(hex: string): [number, number, number] {
   return [
@@ -145,14 +165,23 @@ form.addEventListener("submit", async (e) => {
 
   try {
     const colorHex = data.get("color") as string;
-    const options = { ...DEFAULT_OPTIONS, spacingMm, marginMm, color: hexToRgb(colorHex) };
+    const startYear = parseInt(data.get("cal-year") as string, 10);
+    const startMonth = parseInt(data.get("cal-month") as string, 10);
+    const options = {
+      ...DEFAULT_OPTIONS,
+      spacingMm,
+      marginMm,
+      color: hexToRgb(colorHex),
+      startYear: isNaN(startYear) ? new Date().getFullYear() : startYear,
+      startMonth: isNaN(startMonth) ? new Date().getMonth() : startMonth,
+    };
     const widthPt = mmToPt(size.widthMm);
     const heightPt = mmToPt(size.heightMm);
 
     const contentDoc = await PDFDocument.create();
     for (let i = 0; i < pageCount; i++) {
       const page = contentDoc.addPage([widthPt, heightPt]);
-      layoutFn(page, size.widthMm, size.heightMm, options);
+      layoutFn(page, size.widthMm, size.heightMm, { ...options, pageIndex: i });
     }
 
     const insertBytes = await contentDoc.save();

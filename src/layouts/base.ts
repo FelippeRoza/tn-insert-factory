@@ -5,6 +5,10 @@ export interface LayoutOptions {
   marginMm: number;
   color: [number, number, number];
   lineWidthPt: number;
+  // template options
+  pageIndex?: number;   // 0-based page index within the document
+  startYear?: number;   // calendar: which year the first page represents
+  startMonth?: number;  // calendar: which month the first page represents (0 = January)
 }
 
 export const DEFAULT_OPTIONS: LayoutOptions = {

@@ -17,6 +17,8 @@ program
   .option("-p, --pages <n>", "Number of pages", "8")
   .option("--spacing <mm>", "Grid/dot/line spacing in mm", "5")
   .option("--margin <mm>", "Page margin in mm", "8")
+  .option("--year <n>", "Calendar: starting year (default: current year)")
+  .option("--month <n>", "Calendar: starting month 1–12 (default: current month)")
   .option("--print", "Also generate an A4 print-ready PDF with booklet imposition")
   .option("-o, --output <file>", "Output PDF filename", "insert.pdf")
   .parse();
@@ -60,10 +62,13 @@ async function main() {
     }
   }
 
+  const now = new Date();
   const options = {
     ...DEFAULT_OPTIONS,
     spacingMm: parseFloat(opts.spacing),
     marginMm: parseFloat(opts.margin),
+    startYear: opts.year ? parseInt(opts.year, 10) : now.getFullYear(),
+    startMonth: opts.month ? parseInt(opts.month, 10) - 1 : now.getMonth(),
   };
 
   const widthPt = mmToPt(size.widthMm);
@@ -72,7 +77,7 @@ async function main() {
   const contentDoc = await PDFDocument.create();
   for (let i = 0; i < pageCount; i++) {
     const page = contentDoc.addPage([widthPt, heightPt]);
-    layoutFn(page, size.widthMm, size.heightMm, options);
+    layoutFn(page, size.widthMm, size.heightMm, { ...options, pageIndex: i });
   }
 
   const contentBytes = await contentDoc.save();
