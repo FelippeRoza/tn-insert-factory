@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TN Insert Factory</title>
+    <style>
+      *, *::before, *::after { box-sizing: border-box; }
+
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 480px;
+        margin: 2rem auto;
+        padding: 0 1rem;
+        color: #1a1a1a;
+      }
+
+      h1 { font-size: 1.25rem; margin-bottom: 1.5rem; }
+
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+        margin-bottom: 1rem;
+      }
+
+      label { font-size: 0.875rem; font-weight: 500; }
+
+      select, input[type="number"] {
+        padding: 0.4rem 0.5rem;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        width: 100%;
+      }
+
+      .checkbox-field {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .checkbox-field label { font-size: 0.875rem; font-weight: 500; margin: 0; }
+
+      button {
+        width: 100%;
+        padding: 0.6rem;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        margin-top: 0.5rem;
+      }
+
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      #error {
+        color: #c00;
+        font-size: 0.85rem;
+        margin-top: 0.75rem;
+        display: none;
+      }
+
+      /* info box */
+      .info-toggle {
+        all: unset;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        border: 1px solid #999;
+        font-size: 0.65rem;
+        color: #666;
+        cursor: pointer;
+        line-height: 1;
+        flex-shrink: 0;
+      }
+
+      .info-toggle:hover { border-color: #333; color: #333; }
+
+      .info-box {
+        display: none;
+        font-size: 0.8rem;
+        color: #555;
+        background: #f5f5f5;
+        border-left: 3px solid #ccc;
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 1rem;
+        border-radius: 0 4px 4px 0;
+        line-height: 1.5;
+      }
+
+      .info-box.open { display: block; }
+
+      /* preview */
+      #preview {
+        display: none;
+        margin-top: 1.5rem;
+      }
+
+      .preview-header {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .preview-header h2 {
+        font-size: 0.875rem;
+        font-weight: 500;
+        margin: 0;
+      }
+
+      #preview-label {
+        font-size: 0.75rem;
+        color: #666;
+        margin-left: auto;
+      }
+
+      #preview iframe {
+        width: 100%;
+        height: 480px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+
+      .download-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 0.75rem;
+      }
+
+      .download-buttons button { margin-top: 0; }
+    </style>
+  </head>
+  <body>
+    <h1>TN Insert Factory</h1>
+
+    <form id="form">
+      <div class="field">
+        <label for="size">Size</label>
+        <select id="size" name="size">
+          <option value="passport">Passport (89 × 124 mm)</option>
+          <option value="standard">Standard (110 × 210 mm)</option>
+          <option value="a5">A5 (148 × 210 mm)</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="layout">Layout</label>
+        <select id="layout" name="layout">
+          <option value="dotted">Dotted</option>
+          <option value="grid">Grid</option>
+          <option value="lines">Lines</option>
+          <option value="blank">Blank</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="pages">Pages</label>
+        <input type="number" id="pages" name="pages" value="8" min="1" step="1" />
+      </div>
+
+      <div class="field">
+        <label for="spacing">Spacing (mm)</label>
+        <input type="number" id="spacing" name="spacing" value="5" min="1" step="0.5" />
+      </div>
+
+      <div class="field">
+        <label for="margin">Margin (mm)</label>
+        <input type="number" id="margin" name="margin" value="8" min="1" step="0.5" />
+      </div>
+
+      <div class="checkbox-field">
+        <input type="checkbox" id="print" name="print" checked />
+        <label for="print">Print-ready (booklet imposition on A4)</label>
+        <button type="button" class="info-toggle" aria-expanded="false" data-target="info-print">?</button>
+      </div>
+      <div class="info-box" id="info-print">
+        Pages are reordered and arranged on A4 sheets for double-sided printing.
+        Print, fold (and cut for passport size), then saddle-stitch to assemble the booklet.
+        The preview shows the A4 print sheet layout with fold and cut marks.
+      </div>
+
+      <button type="submit" id="btn">Generate</button>
+      <p id="error"></p>
+    </form>
+
+    <div id="preview">
+      <div class="preview-header">
+        <h2>Preview</h2>
+        <button type="button" class="info-toggle" aria-expanded="false" data-target="info-preview">?</button>
+        <span id="preview-label"></span>
+      </div>
+      <div class="info-box" id="info-preview"></div>
+      <iframe id="preview-frame" title="PDF preview"></iframe>
+      <div class="download-buttons">
+        <button id="download-insert">Download insert.pdf</button>
+        <button id="download-print" style="display:none">Download insert-print.pdf</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
