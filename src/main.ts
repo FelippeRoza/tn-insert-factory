@@ -13,8 +13,7 @@ const previewSection = document.getElementById("preview") as HTMLDivElement;
 const previewFrame = document.getElementById("preview-frame") as HTMLIFrameElement;
 const previewLabel = document.getElementById("preview-label") as HTMLSpanElement;
 const previewInfoBox = document.getElementById("info-preview") as HTMLDivElement;
-const downloadInsert = document.getElementById("download-insert") as HTMLButtonElement;
-const downloadPrint = document.getElementById("download-print") as HTMLButtonElement;
+const downloadBtn = document.getElementById("download-preview") as HTMLButtonElement;
 
 let currentInsertBytes: Uint8Array | null = null;
 let currentPrintBytes: Uint8Array | null = null;
@@ -59,27 +58,20 @@ function showPreview(bytes: Uint8Array, printMode: boolean) {
     previewLabel.textContent = "Print-ready (A4)";
     previewInfoBox.textContent =
       "Showing the A4 print sheet with pages arranged for double-sided booklet printing. " +
-      "Dashed lines are fold guides; solid lines are cut marks. " +
-      "Download insert.pdf for the plain per-page version.";
+      "Dashed lines are fold guides; solid lines are cut marks.";
+    downloadBtn.onclick = () => triggerDownload(bytes, "insert-print.pdf");
   } else {
     previewLabel.textContent = "Standard insert";
     previewInfoBox.textContent =
       "Showing the insert at its actual notebook size — one page per view. " +
       "Ready to print as-is if your printer supports the page size, " +
       "or enable Print-ready to get an A4 booklet layout instead.";
+    downloadBtn.onclick = () => triggerDownload(bytes, "insert.pdf");
   }
 
   previewSection.style.display = "block";
   previewSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
-
-downloadInsert.addEventListener("click", () => {
-  if (currentInsertBytes) triggerDownload(currentInsertBytes, "insert.pdf");
-});
-
-downloadPrint.addEventListener("click", () => {
-  if (currentPrintBytes) triggerDownload(currentPrintBytes, "insert-print.pdf");
-});
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
@@ -140,9 +132,7 @@ form.addEventListener("submit", async (e) => {
       currentPrintBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm);
     }
 
-    // Preview shows print PDF when available, standard insert otherwise
     showPreview(printMode ? currentPrintBytes! : currentInsertBytes, printMode);
-    downloadPrint.style.display = printMode ? "block" : "none";
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
   } finally {
