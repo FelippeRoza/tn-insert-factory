@@ -9,23 +9,51 @@ const LAYOUTS: Record<string, LayoutFn> = layouts;
 const form = document.getElementById("form") as HTMLFormElement;
 const btn = document.getElementById("btn") as HTMLButtonElement;
 const errorEl = document.getElementById("error") as HTMLParagraphElement;
-const previewSection = document.getElementById("preview") as HTMLDivElement;
 const previewFrame = document.getElementById("preview-frame") as HTMLIFrameElement;
+const previewEmpty = document.getElementById("preview-empty") as HTMLDivElement;
 const previewLabel = document.getElementById("preview-label") as HTMLSpanElement;
 const previewInfoBox = document.getElementById("info-preview") as HTMLDivElement;
+const previewInfoToggle = document.getElementById("preview-info-toggle") as HTMLButtonElement;
 const downloadBtn = document.getElementById("download-preview") as HTMLButtonElement;
 
-let currentInsertBytes: Uint8Array | null = null;
-let currentPrintBytes: Uint8Array | null = null;
 let currentPreviewUrl: string | null = null;
 
+// Color swatches
+const colorHiddenInput = document.getElementById("color") as HTMLInputElement;
+const colorCustomPicker = document.getElementById("color-custom") as HTMLInputElement;
+const swatches = document.querySelectorAll<HTMLButtonElement>(".swatch[data-color]");
+
+function selectSwatch(hex: string, activeSwatch?: HTMLButtonElement) {
+  swatches.forEach((s) => s.classList.remove("selected"));
+  if (activeSwatch) activeSwatch.classList.add("selected");
+  colorHiddenInput.value = hex;
+}
+
+swatches.forEach((swatch) => {
+  swatch.addEventListener("click", () => selectSwatch(swatch.dataset.color!, swatch));
+});
+
+colorCustomPicker.addEventListener("input", () => {
+  swatches.forEach((s) => s.classList.remove("selected"));
+  colorHiddenInput.value = colorCustomPicker.value;
+});
+
+function hexToRgb(hex: string): [number, number, number] {
+  return [
+    parseInt(hex.slice(1, 3), 16) / 255,
+    parseInt(hex.slice(3, 5), 16) / 255,
+    parseInt(hex.slice(5, 7), 16) / 255,
+  ];
+}
+
 // Toggle info boxes
-document.querySelectorAll<HTMLButtonElement>(".info-toggle").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const target = document.getElementById(btn.dataset.target!);
+document.querySelectorAll<HTMLButtonElement>(".info-toggle").forEach((toggle) => {
+  toggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    const target = document.getElementById(toggle.dataset.target!);
     if (!target) return;
     const open = target.classList.toggle("open");
-    btn.setAttribute("aria-expanded", String(open));
+    toggle.setAttribute("aria-expanded", String(open));
   });
 });
 
@@ -53,6 +81,10 @@ function showPreview(bytes: Uint8Array, printMode: boolean) {
   const blob = new Blob([bytes], { type: "application/pdf" });
   currentPreviewUrl = URL.createObjectURL(blob);
   previewFrame.src = currentPreviewUrl;
+  previewFrame.style.display = "block";
+  previewEmpty.style.display = "none";
+  previewInfoToggle.style.display = "inline-flex";
+  downloadBtn.style.display = "block";
 
   if (printMode) {
     previewLabel.textContent = "Print-ready (A4)";
@@ -68,9 +100,6 @@ function showPreview(bytes: Uint8Array, printMode: boolean) {
       "or enable Print-ready to get an A4 booklet layout instead.";
     downloadBtn.onclick = () => triggerDownload(bytes, "insert.pdf");
   }
-
-  previewSection.style.display = "block";
-  previewSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 form.addEventListener("submit", async (e) => {
@@ -115,7 +144,8 @@ form.addEventListener("submit", async (e) => {
   btn.textContent = "Generating…";
 
   try {
-    const options = { ...DEFAULT_OPTIONS, spacingMm, marginMm };
+    const colorHex = data.get("color") as string;
+    const options = { ...DEFAULT_OPTIONS, spacingMm, marginMm, color: hexToRgb(colorHex) };
     const widthPt = mmToPt(size.widthMm);
     const heightPt = mmToPt(size.heightMm);
 
@@ -125,14 +155,14 @@ form.addEventListener("submit", async (e) => {
       layoutFn(page, size.widthMm, size.heightMm, options);
     }
 
-    currentInsertBytes = await contentDoc.save();
-    currentPrintBytes = null;
+    const insertBytes = await contentDoc.save();
+    let previewBytes = insertBytes;
 
     if (printMode) {
-      currentPrintBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm);
+      previewBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm);
     }
 
-    showPreview(printMode ? currentPrintBytes! : currentInsertBytes, printMode);
+    showPreview(previewBytes, printMode);
   } catch (err) {
     showError(err instanceof Error ? err.message : String(err));
   } finally {

@@ -5,90 +5,221 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TN Insert Factory</title>
     <style>
-      *, *::before, *::after { box-sizing: border-box; }
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-      body {
-        font-family: system-ui, sans-serif;
-        max-width: 480px;
-        margin: 2rem auto;
-        padding: 0 1rem;
+      html, body {
+        height: 100%;
+        font-family: system-ui, -apple-system, sans-serif;
         color: #1a1a1a;
+        background: #f0efed;
       }
 
-      h1 { font-size: 1.25rem; margin-bottom: 1.5rem; }
+      /* ── Layout ── */
+      .app {
+        display: flex;
+        height: 100vh;
+      }
 
+      /* ── Left panel ── */
+      .sidebar {
+        width: 320px;
+        flex-shrink: 0;
+        background: #fff;
+        border-right: 1px solid #e0dedd;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+      }
+
+      .sidebar-header {
+        padding: 1.5rem 1.5rem 1rem;
+        border-bottom: 1px solid #e0dedd;
+      }
+
+      .sidebar-header h1 {
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .sidebar-header p {
+        font-size: 0.75rem;
+        color: #888;
+        margin-top: 0.2rem;
+      }
+
+      .sidebar-body {
+        padding: 1.25rem 1.5rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+
+      /* ── Form fields ── */
       .field {
         display: flex;
         flex-direction: column;
-        gap: 0.25rem;
+        gap: 0.3rem;
         margin-bottom: 1rem;
       }
 
-      label { font-size: 0.875rem; font-weight: 500; }
+      .field label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #666;
+      }
 
       select, input[type="number"] {
-        padding: 0.4rem 0.5rem;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        font-size: 0.9rem;
+        padding: 0.45rem 0.6rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        color: #1a1a1a;
+        background: #fafafa;
         width: 100%;
+        appearance: none;
+        -webkit-appearance: none;
+        transition: border-color 0.15s;
       }
 
-      .checkbox-field {
+      select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23888' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 0.6rem center; padding-right: 2rem; }
+
+      select:focus, input[type="number"]:focus {
+        outline: none;
+        border-color: #1a1a1a;
+        background: #fff;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .row .field { margin-bottom: 0; }
+
+      /* ── Checkbox / toggle ── */
+      .toggle-field {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 0.25rem;
-      }
-
-      .checkbox-field label { font-size: 0.875rem; font-weight: 500; margin: 0; }
-
-      button {
-        width: 100%;
-        padding: 0.6rem;
-        background: #1a1a1a;
-        color: #fff;
-        border: none;
-        border-radius: 4px;
-        font-size: 0.9rem;
+        justify-content: space-between;
+        padding: 0.6rem 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background: #fafafa;
+        margin-bottom: 0.5rem;
         cursor: pointer;
-        margin-top: 0.5rem;
+        user-select: none;
       }
 
-      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .toggle-field:hover { border-color: #bbb; }
 
-      #error {
-        color: #c00;
-        font-size: 0.85rem;
-        margin-top: 0.75rem;
-        display: none;
+      .toggle-field-left {
+        display: flex;
+        flex-direction: column;
+        gap: 0.1rem;
       }
 
-      /* info box */
-      .info-toggle {
-        all: unset;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 1rem;
-        height: 1rem;
-        border-radius: 50%;
-        border: 1px solid #999;
-        font-size: 0.65rem;
-        color: #666;
-        cursor: pointer;
-        line-height: 1;
+      .toggle-field-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+      }
+
+      .toggle-field-hint {
+        font-size: 0.7rem;
+        color: #888;
+      }
+
+      /* custom toggle switch */
+      .switch {
+        position: relative;
+        width: 34px;
+        height: 20px;
         flex-shrink: 0;
       }
 
-      .info-toggle:hover { border-color: #333; color: #333; }
+      .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
 
+      .switch-track {
+        position: absolute;
+        inset: 0;
+        background: #ddd;
+        border-radius: 20px;
+        transition: background 0.2s;
+      }
+
+      .switch-thumb {
+        position: absolute;
+        top: 3px;
+        left: 3px;
+        width: 14px;
+        height: 14px;
+        background: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+      }
+
+      .switch input:checked ~ .switch-track { background: #1a1a1a; }
+      .switch input:checked ~ .switch-thumb { transform: translateX(14px); }
+
+      /* ── Color swatches ── */
+      .color-swatches {
+        display: flex;
+        gap: 0.5rem;
+        align-items: center;
+      }
+
+      .swatch {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        cursor: pointer;
+        flex-shrink: 0;
+        outline-offset: 2px;
+        transition: transform 0.1s, box-shadow 0.1s;
+        position: relative;
+      }
+
+      .swatch:hover { transform: scale(1.12); }
+
+      .swatch.selected {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px #1a1a1a;
+      }
+
+      .swatch-custom {
+        background: conic-gradient(red, yellow, lime, cyan, blue, magenta, red);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .swatch-custom input[type="color"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+        border: none;
+        border-radius: 50%;
+        padding: 0;
+      }
+
+      /* ── Info box ── */
       .info-box {
         display: none;
-        font-size: 0.8rem;
-        color: #555;
-        background: #f5f5f5;
-        border-left: 3px solid #ccc;
+        font-size: 0.75rem;
+        color: #666;
+        background: #f5f4f2;
+        border-left: 2px solid #ccc;
         padding: 0.5rem 0.75rem;
         margin-bottom: 1rem;
         border-radius: 0 4px 4px 0;
@@ -97,111 +228,256 @@
 
       .info-box.open { display: block; }
 
-      /* preview */
-      #preview {
-        display: none;
-        margin-top: 1.5rem;
+      .info-toggle {
+        all: unset;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 1px solid #bbb;
+        font-size: 0.6rem;
+        color: #888;
+        cursor: pointer;
+        flex-shrink: 0;
+        margin-left: 0.4rem;
+        vertical-align: middle;
       }
 
-      .preview-header {
+      .info-toggle:hover { border-color: #555; color: #555; }
+
+      /* ── Generate button ── */
+      .sidebar-footer {
+        padding: 1rem 1.5rem 1.5rem;
+        border-top: 1px solid #e0dedd;
+        margin-top: auto;
+      }
+
+      #btn {
+        width: 100%;
+        padding: 0.65rem;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      #btn:hover:not(:disabled) { background: #333; }
+      #btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      #error {
+        color: #c00;
+        font-size: 0.75rem;
+        margin-top: 0.6rem;
+        display: none;
+        line-height: 1.4;
+      }
+
+      /* ── Right panel / preview ── */
+      .preview-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .preview-toolbar {
         display: flex;
         align-items: center;
-        gap: 0.4rem;
-        margin-bottom: 0.5rem;
+        gap: 0.75rem;
+        padding: 0.75rem 1.25rem;
+        background: #fff;
+        border-bottom: 1px solid #e0dedd;
+        min-height: 49px;
       }
 
-      .preview-header h2 {
-        font-size: 0.875rem;
-        font-weight: 500;
-        margin: 0;
+      .preview-toolbar h2 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: #666;
       }
 
       #preview-label {
         font-size: 0.75rem;
-        color: #666;
+        color: #aaa;
+      }
+
+      #preview-info-toggle { margin-left: 0; }
+
+      #download-preview {
         margin-left: auto;
+        padding: 0.4rem 1rem;
+        background: #1a1a1a;
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-family: inherit;
+        font-weight: 500;
+        cursor: pointer;
+        display: none;
+        transition: background 0.15s;
       }
 
-      #preview iframe {
-        width: 100%;
-        height: 480px;
-        border: 1px solid #ccc;
-        border-radius: 4px;
+      #download-preview:hover { background: #333; }
+
+      .preview-info-bar {
+        font-size: 0.75rem;
+        color: #666;
+        background: #faf9f7;
+        border-bottom: 1px solid #e0dedd;
+        padding: 0.5rem 1.25rem;
+        line-height: 1.5;
+        display: none;
       }
 
-      .download-buttons {
+      .preview-info-bar.open { display: block; }
+
+      .preview-frame-wrap {
+        flex: 1;
         display: flex;
-        gap: 0.5rem;
-        margin-top: 0.75rem;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        overflow: hidden;
       }
 
-      .download-buttons button { margin-top: 0; }
+      .preview-empty {
+        text-align: center;
+        color: #bbb;
+      }
+
+      .preview-empty p {
+        font-size: 0.875rem;
+        margin-top: 0.5rem;
+      }
+
+      #preview-frame {
+        display: none;
+        width: 100%;
+        height: 100%;
+        border: none;
+        border-radius: 6px;
+        box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+      }
     </style>
   </head>
   <body>
-    <h1>TN Insert Factory</h1>
+    <div class="app">
 
-    <form id="form">
-      <div class="field">
-        <label for="size">Size</label>
-        <select id="size" name="size">
-          <option value="passport">Passport (89 × 124 mm)</option>
-          <option value="standard">Standard (110 × 210 mm)</option>
-          <option value="a5">A5 (148 × 210 mm)</option>
-        </select>
-      </div>
+      <!-- Left: config -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>TN Insert Factory</h1>
+          <p>Generate PDF inserts for traveler's notebooks</p>
+        </div>
 
-      <div class="field">
-        <label for="layout">Layout</label>
-        <select id="layout" name="layout">
-          <option value="dotted">Dotted</option>
-          <option value="grid">Grid</option>
-          <option value="lines">Lines</option>
-          <option value="blank">Blank</option>
-        </select>
-      </div>
+        <form id="form" class="sidebar-body">
+          <div class="field">
+            <label for="size">Size</label>
+            <select id="size" name="size">
+              <option value="passport">Passport — 89 × 124 mm</option>
+              <option value="standard">Standard — 110 × 210 mm</option>
+              <option value="a5">A5 — 148 × 210 mm</option>
+            </select>
+          </div>
 
-      <div class="field">
-        <label for="pages">Pages</label>
-        <input type="number" id="pages" name="pages" value="8" min="1" step="1" />
-      </div>
+          <div class="field">
+            <label for="layout">Layout</label>
+            <select id="layout" name="layout">
+              <option value="dotted">Dotted</option>
+              <option value="grid">Grid</option>
+              <option value="lines">Lines</option>
+              <option value="blank">Blank</option>
+            </select>
+          </div>
 
-      <div class="field">
-        <label for="spacing">Spacing (mm)</label>
-        <input type="number" id="spacing" name="spacing" value="5" min="1" step="0.5" />
-      </div>
+          <div class="field">
+            <label>Color</label>
+            <div class="color-swatches">
+              <button type="button" class="swatch selected" data-color="#b3b3b3" style="background:#b3b3b3" title="Gray"></button>
+              <button type="button" class="swatch" data-color="#7bafd4" style="background:#7bafd4" title="Blue"></button>
+              <button type="button" class="swatch" data-color="#7bbf7b" style="background:#7bbf7b" title="Green"></button>
+              <button type="button" class="swatch" data-color="#d47b7b" style="background:#d47b7b" title="Red"></button>
+              <button type="button" class="swatch" data-color="#1a1a1a" style="background:#1a1a1a" title="Black"></button>
+              <label class="swatch swatch-custom" title="Custom color">
+                <input type="color" id="color-custom" value="#b3b3b3" />
+              </label>
+            </div>
+            <input type="hidden" id="color" name="color" value="#b3b3b3" />
+          </div>
 
-      <div class="field">
-        <label for="margin">Margin (mm)</label>
-        <input type="number" id="margin" name="margin" value="8" min="1" step="0.5" />
-      </div>
+          <div class="field">
+            <label for="pages">Pages</label>
+            <input type="number" id="pages" name="pages" value="8" min="1" step="1" />
+          </div>
 
-      <div class="checkbox-field">
-        <input type="checkbox" id="print" name="print" checked />
-        <label for="print">Print-ready (booklet imposition on A4)</label>
-        <button type="button" class="info-toggle" aria-expanded="false" data-target="info-print">?</button>
-      </div>
-      <div class="info-box" id="info-print">
-        Pages are reordered and arranged on A4 sheets for double-sided printing.
-        Print, fold (and cut for passport size), then saddle-stitch to assemble the booklet.
-        The preview shows the A4 print sheet layout with fold and cut marks.
-      </div>
+          <div class="row">
+            <div class="field">
+              <label for="spacing">Spacing (mm)</label>
+              <input type="number" id="spacing" name="spacing" value="5" min="1" step="0.5" />
+            </div>
+            <div class="field">
+              <label for="margin">Margin (mm)</label>
+              <input type="number" id="margin" name="margin" value="8" min="1" step="0.5" />
+            </div>
+          </div>
 
-      <button type="submit" id="btn">Generate</button>
-      <p id="error"></p>
-    </form>
+          <label class="toggle-field" for="print">
+            <div class="toggle-field-left">
+              <span class="toggle-field-label">
+                Print-ready
+                <button type="button" class="info-toggle" data-target="info-print" aria-expanded="false">?</button>
+              </span>
+              <span class="toggle-field-hint">Booklet imposition on A4</span>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="print" name="print" checked />
+              <span class="switch-track"></span>
+              <span class="switch-thumb"></span>
+            </label>
+          </label>
+          <div class="info-box" id="info-print">
+            Pages are reordered and arranged on A4 sheets for double-sided printing.
+            Print, fold (and cut for passport size), then saddle-stitch to assemble the booklet.
+            The preview shows the A4 layout with fold and cut marks.
+          </div>
 
-    <div id="preview">
-      <div class="preview-header">
-        <h2>Preview</h2>
-        <button type="button" class="info-toggle" aria-expanded="false" data-target="info-preview">?</button>
-        <span id="preview-label"></span>
-      </div>
-      <div class="info-box" id="info-preview"></div>
-      <iframe id="preview-frame" title="PDF preview"></iframe>
-      <div class="download-buttons">
-        <button id="download-preview">Download</button>
-      </div>
+          <p id="error"></p>
+        </form>
+
+        <div class="sidebar-footer">
+          <button type="submit" form="form" id="btn">Generate</button>
+        </div>
+      </aside>
+
+      <!-- Right: preview -->
+      <main class="preview-panel">
+        <div class="preview-toolbar">
+          <h2>Preview</h2>
+          <span id="preview-label"></span>
+          <button type="button" class="info-toggle" id="preview-info-toggle" data-target="info-preview" aria-expanded="false" style="display:none">?</button>
+          <button id="download-preview">Download</button>
+        </div>
+        <div class="preview-info-bar info-box" id="info-preview"></div>
+
+        <div class="preview-frame-wrap">
+          <div class="preview-empty" id="preview-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <p>Configure your insert and click Generate</p>
+          </div>
+          <iframe id="preview-frame" title="PDF preview"></iframe>
+        </div>
+      </main>
+
     </div>
 
     <script type="module" src="/src/main.ts"></script>
