@@ -247,6 +247,25 @@
 
       .info-toggle:hover { border-color: #555; color: #555; }
 
+      /* ── Guide sub-options (shown when print-ready is on) ── */
+      .guide-options {
+        display: none;
+        flex-direction: column;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+        padding-left: 0.75rem;
+        border-left: 2px solid #e0dedd;
+      }
+
+      .guide-options .toggle-field {
+        margin-bottom: 0;
+        padding: 0.4rem 0.6rem;
+        font-size: 0.8rem;
+      }
+
+      .guide-options .toggle-field-label { font-size: 0.8rem; }
+      .guide-options .toggle-field-hint  { font-size: 0.65rem; }
+
       /* ── Generate button ── */
       .sidebar-footer {
         padding: 1rem 1.5rem 1.5rem;
@@ -481,6 +500,31 @@
             Pages are reordered and arranged on A4 sheets for double-sided printing.
             Print, fold (and cut for passport size), then saddle-stitch to assemble the booklet.
             The preview shows the A4 layout with fold and cut marks.
+          </div>
+
+          <div class="guide-options" id="guide-options">
+            <label class="toggle-field" for="show-cut-line">
+              <div class="toggle-field-left">
+                <span class="toggle-field-label">Cut line</span>
+                <span class="toggle-field-hint">Solid line &amp; corner marks</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="show-cut-line" name="show-cut-line" checked />
+                <span class="switch-track"></span>
+                <span class="switch-thumb"></span>
+              </label>
+            </label>
+            <label class="toggle-field" for="show-fold-line">
+              <div class="toggle-field-left">
+                <span class="toggle-field-label">Fold line</span>
+                <span class="toggle-field-hint">Dashed center line</span>
+              </div>
+              <label class="switch">
+                <input type="checkbox" id="show-fold-line" name="show-fold-line" checked />
+                <span class="switch-track"></span>
+                <span class="switch-thumb"></span>
+              </label>
+            </label>
           </div>
 
           <p id="error"></p>

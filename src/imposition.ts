@@ -77,6 +77,18 @@ function get2UpSheets(n: number): Sheet2Up[] {
   });
 }
 
+// ─── Guide marks ────────────────────────────────────────────────────────────
+
+// Vertical tick marks at the top and bottom sheet edges, pointing inward
+function drawTrimTicks(page: PDFPage, x: number, canvasHPt: number): void {
+  const gray = rgb(0.55, 0.55, 0.55);
+  const gap = mmToPt(1.5);
+  const tick = mmToPt(4);
+  const thin = 0.25;
+  page.drawLine({ start: { x, y: canvasHPt - gap }, end: { x, y: canvasHPt - gap - tick }, thickness: thin, color: gray });
+  page.drawLine({ start: { x, y: gap }, end: { x, y: gap + tick }, thickness: thin, color: gray });
+}
+
 // ─── Crop marks ─────────────────────────────────────────────────────────────
 
 function drawPageCropMarks(
@@ -126,7 +138,8 @@ function quadrantOrigin(
 async function create4UpPdf(
   contentDoc: PDFDocument,
   widthMm: number,
-  heightMm: number
+  heightMm: number,
+  { showCutLine = true, showFoldLine = true }: GuideOptions = {}
 ): Promise<Uint8Array> {
   const pageCount = contentDoc.getPageCount();
   const sheets = get4UpSheets(pageCount);
@@ -142,26 +155,28 @@ async function create4UpPdf(
     for (const pageNums of [front, back]) {
       const a4Page = a4Doc.addPage([a4WPt, a4HPt]);
 
-      // Solid horizontal line = cut here
-      a4Page.drawLine({
-        start: { x: 0, y: a4HPt / 2 },
-        end: { x: a4WPt, y: a4HPt / 2 },
-        thickness: 0.25,
-        color: rgb(0.55, 0.55, 0.55),
-      });
-      // Dashed vertical line = fold each half here
-      a4Page.drawLine({
-        start: { x: a4WPt / 2, y: 0 },
-        end: { x: a4WPt / 2, y: a4HPt },
-        thickness: 0.25,
-        color: rgb(0.55, 0.55, 0.55),
-        dashArray: [3, 3],
-      });
+      if (showCutLine) {
+        a4Page.drawLine({
+          start: { x: 0, y: a4HPt / 2 },
+          end: { x: a4WPt, y: a4HPt / 2 },
+          thickness: 0.25,
+          color: rgb(0.55, 0.55, 0.55),
+        });
+      }
+      if (showFoldLine) {
+        a4Page.drawLine({
+          start: { x: a4WPt / 2, y: 0 },
+          end: { x: a4WPt / 2, y: a4HPt },
+          thickness: 0.25,
+          color: rgb(0.55, 0.55, 0.55),
+          dashArray: [3, 3],
+        });
+      }
 
       for (let i = 0; i < 4; i++) {
         const { x, y } = quadrantOrigin(positions[i], pageWPt, pageHPt);
         a4Page.drawPage(embedded[pageNums[i] - 1], { x, y, width: pageWPt, height: pageHPt });
-        drawPageCropMarks(a4Page, x, y, pageWPt, pageHPt);
+        if (showCutLine) drawPageCropMarks(a4Page, x, y, pageWPt, pageHPt);
       }
     }
   }
@@ -174,7 +189,8 @@ async function create4UpPdf(
 async function create2UpPdf(
   contentDoc: PDFDocument,
   widthMm: number,
-  heightMm: number
+  heightMm: number,
+  { showCutLine = true, showFoldLine = true }: GuideOptions = {}
 ): Promise<Uint8Array> {
   const pageCount = contentDoc.getPageCount();
   const sheets = get2UpSheets(pageCount);
@@ -192,23 +208,26 @@ async function create2UpPdf(
     for (const [leftNum, rightNum] of [front, back]) {
       const a4Page = a4Doc.addPage([canvasWPt, canvasHPt]);
 
-      // Dashed fold line at horizontal center
-      a4Page.drawLine({
-        start: { x: canvasWPt / 2, y: 0 },
-        end: { x: canvasWPt / 2, y: canvasHPt },
-        thickness: 0.25,
-        color: rgb(0.55, 0.55, 0.55),
-        dashArray: [3, 3],
-      });
+      if (showFoldLine) {
+        a4Page.drawLine({
+          start: { x: canvasWPt / 2, y: 0 },
+          end: { x: canvasWPt / 2, y: canvasHPt },
+          thickness: 0.25,
+          color: rgb(0.55, 0.55, 0.55),
+          dashArray: [3, 3],
+        });
+      }
 
       const leftX = offsetX;
       const rightX = offsetX + pageWPt;
 
       a4Page.drawPage(embedded[leftNum - 1], { x: leftX, y: offsetY, width: pageWPt, height: pageHPt });
-      drawPageCropMarks(a4Page, leftX, offsetY, pageWPt, pageHPt);
-
       a4Page.drawPage(embedded[rightNum - 1], { x: rightX, y: offsetY, width: pageWPt, height: pageHPt });
-      drawPageCropMarks(a4Page, rightX, offsetY, pageWPt, pageHPt);
+
+      if (showCutLine) {
+        drawTrimTicks(a4Page, leftX, canvasHPt);
+        drawTrimTicks(a4Page, rightX + pageWPt, canvasHPt);
+      }
     }
   }
 
@@ -217,13 +236,19 @@ async function create2UpPdf(
 
 // ─── Public API ─────────────────────────────────────────────────────────────
 
+export interface GuideOptions {
+  showCutLine?: boolean;   // solid line + crop marks; default true
+  showFoldLine?: boolean;  // dashed center line; default true
+}
+
 export async function createPrintPdf(
   contentDoc: PDFDocument,
   widthMm: number,
-  heightMm: number
+  heightMm: number,
+  guides: GuideOptions = {}
 ): Promise<Uint8Array> {
   const strategy = getStrategy(widthMm, heightMm);
   return strategy === "portrait4up"
-    ? create4UpPdf(contentDoc, widthMm, heightMm)
-    : create2UpPdf(contentDoc, widthMm, heightMm);
+    ? create4UpPdf(contentDoc, widthMm, heightMm, guides)
+    : create2UpPdf(contentDoc, widthMm, heightMm, guides);
 }

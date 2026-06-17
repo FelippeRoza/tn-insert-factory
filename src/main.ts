@@ -2,7 +2,7 @@ import { PDFDocument } from "pdf-lib";
 import { SIZES, mmToPt } from "./sizes";
 import { DEFAULT_OPTIONS, LayoutFn } from "./layouts/base";
 import * as layouts from "./layouts/index";
-import { createPrintPdf, getStrategy, pagesPerSheet } from "./imposition";
+import { createPrintPdf, getStrategy, pagesPerSheet, GuideOptions } from "./imposition";
 
 const LAYOUTS: Record<string, LayoutFn> = layouts;
 
@@ -20,6 +20,10 @@ const calendarFields = document.getElementById("calendar-fields") as HTMLDivElem
 const spacingRow = document.getElementById("spacing-row") as HTMLDivElement;
 const calYearInput = document.getElementById("cal-year") as HTMLInputElement;
 const calMonthSelect = document.getElementById("cal-month") as HTMLSelectElement;
+const printCheckbox = document.getElementById("print") as HTMLInputElement;
+const guideOptions = document.getElementById("guide-options") as HTMLDivElement;
+const showCutLineCheckbox = document.getElementById("show-cut-line") as HTMLInputElement;
+const showFoldLineCheckbox = document.getElementById("show-fold-line") as HTMLInputElement;
 
 let currentPreviewUrl: string | null = null;
 
@@ -57,6 +61,13 @@ function applyLayoutUI(layoutKey: string) {
 // Sync on load and on change.
 applyLayoutUI(layoutSelect.value);
 layoutSelect.addEventListener("change", () => applyLayoutUI(layoutSelect.value));
+
+function applyPrintUI() {
+  guideOptions.style.display = printCheckbox.checked ? "flex" : "none";
+}
+
+applyPrintUI();
+printCheckbox.addEventListener("change", applyPrintUI);
 
 function hexToRgb(hex: string): [number, number, number] {
   return [
@@ -188,7 +199,11 @@ form.addEventListener("submit", async (e) => {
     let previewBytes = insertBytes;
 
     if (printMode) {
-      previewBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm);
+      const guides: GuideOptions = {
+        showCutLine: showCutLineCheckbox.checked,
+        showFoldLine: showFoldLineCheckbox.checked,
+      };
+      previewBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm, guides);
     }
 
     showPreview(previewBytes, printMode);

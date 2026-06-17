@@ -5,7 +5,7 @@ import path from "path";
 import { SIZES, mmToPt } from "./sizes";
 import { DEFAULT_OPTIONS, LayoutFn } from "./layouts/base";
 import * as layouts from "./layouts/index";
-import { createPrintPdf, getStrategy, pagesPerSheet } from "./imposition";
+import { createPrintPdf, getStrategy, pagesPerSheet, GuideOptions } from "./imposition";
 
 const LAYOUTS: Record<string, LayoutFn> = layouts;
 
@@ -20,6 +20,8 @@ program
   .option("--year <n>", "Calendar: starting year (default: current year)")
   .option("--month <n>", "Calendar: starting month 1–12 (default: current month)")
   .option("--print", "Also generate an A4 print-ready PDF with booklet imposition")
+  .option("--no-cut-line", "Omit the cut guide line and crop marks from the print PDF")
+  .option("--no-fold-line", "Omit the fold guide line from the print PDF")
   .option("-o, --output <file>", "Output PDF filename", "insert.pdf")
   .parse();
 
@@ -89,7 +91,8 @@ async function main() {
     const base = opts.output.slice(0, -ext.length || undefined);
     const printPath = `${base}-print${ext}`;
     try {
-      const printBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm);
+      const guides: GuideOptions = { showCutLine: opts.cutLine, showFoldLine: opts.foldLine };
+      const printBytes = await createPrintPdf(contentDoc, size.widthMm, size.heightMm, guides);
       await fs.writeFile(printPath, printBytes);
       const strategy = getStrategy(size.widthMm, size.heightMm);
       console.log(`${printPath}  (A4 print-ready, double-sided, booklet order)`);
