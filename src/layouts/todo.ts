@@ -16,10 +16,11 @@ export const todoList: LayoutFn = (page, widthMm, heightMm, { spacingMm, marginM
   for (let i = 0; i < count; i++) {
     const y = mmToPt(startMm + i * spacingMm);
 
-    // Square outline centered on the line. Omitting `color` means no fill (border only).
+    // Square outline centered in the row space between this line and the one above.
+    const rowCenterPt = y + mmToPt(spacingMm / 2);
     page.drawRectangle({
       x: leftPt,
-      y: y - checkSizePt / 2,
+      y: rowCenterPt - checkSizePt / 2,
       width: checkSizePt,
       height: checkSizePt,
       borderColor: lineColor,
